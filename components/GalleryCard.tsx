@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { LoadingImage } from "@/components/LoadingImage";
 import type { GalleryItem } from "@/data/gallery";
 
 type GalleryCardProps = {
@@ -15,7 +15,7 @@ export function GalleryCard({ item, index, onOpen }: GalleryCardProps) {
       onClick={() => onOpen(index)}
       type="button"
     >
-      <Image
+      <LoadingImage
         src={item.src}
         alt={item.title}
         fill

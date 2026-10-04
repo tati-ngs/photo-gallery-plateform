@@ -2,10 +2,11 @@
 
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { LoadingImage } from "@/components/LoadingImage";
 import { ServiceCard } from "@/components/ServiceCard";
 import type { GalleryCategory } from "@/data/gallery";
 import { services } from "@/data/services";
-import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { SyntheticEvent } from "react";
 import { useRef } from "react";
@@ -145,13 +146,14 @@ export default function Home() {
               <div className="absolute left-1/2 top-1/2 h-[112%] w-[112%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#ded2ef]" />
               <div className="hero-shape absolute inset-0 rounded-full bg-[#d9c4ff]" />
 
-              <Image
+              <LoadingImage
                 src="/photographer-cutout.png"
                 alt="Photographe PS23PHOTOGRAPHY"
                 width={330}
                 height={500}
                 priority
                 style={{ height: "auto" }}
+                loadingClassName="rounded-full"
                 className="hero-subject-glow absolute left-1/2 top-1/2 z-10 h-auto w-[355px] -translate-x-1/2 -translate-y-[58%] object-contain sm:w-[345px] sm:-translate-y-[53%] md:w-[330px] md:-translate-y-[54%] lg:w-[320px]"
               />
 
@@ -255,8 +257,9 @@ export default function Home() {
           </div>
 
           <div className="mx-auto mt-7 grid max-w-6xl gap-5 md:grid-cols-2">
-            {services.map((service) => (
+            {services.map((service, index) => (
               <ServiceCard
+                eager={index < 3}
                 key={service.title}
                 onOpenCategory={showGallery}
                 service={service}
@@ -337,7 +340,7 @@ export default function Home() {
               }`}
             >
               <div className="relative aspect-square overflow-hidden rounded-lg">
-                <Image
+                <LoadingImage
                   src="/douceur d'un oui.jpeg"
                   alt="Cérémonie sous une arche"
                   fill
@@ -363,7 +366,7 @@ export default function Home() {
                 }`}
               >
                 <div className="relative aspect-square overflow-hidden rounded-lg">
-                  <Image
+                  <LoadingImage
                     src="/lumiere du jour.jpeg"
                     alt="Portrait à la lumière du jour"
                     fill
@@ -388,7 +391,7 @@ export default function Home() {
                 }`}
               >
                 <div className="relative aspect-square overflow-hidden rounded-lg">
-                  <Image
+                  <LoadingImage
                     src="/matiere.jpg"
                     alt="Matières et nuances"
                     fill
@@ -413,7 +416,7 @@ export default function Home() {
                 }`}
               >
                 <div className="relative aspect-square overflow-hidden rounded-lg">
-                  <Image
+                  <LoadingImage
                     src="/conference.jpeg"
                     alt="Conférence et panel"
                     fill
@@ -520,12 +523,12 @@ export default function Home() {
               </div>
             </div>
 
-            <a
-              href="#client"
+            <Link
+              href="/espace-client"
               className="motion-button w-fit rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#6f3de2]"
             >
               Accéder à l’espace client ↗
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -547,7 +550,7 @@ export default function Home() {
             </p>
 
             <div className="relative mt-7 h-32 max-w-md overflow-hidden rounded-2xl">
-              <Image
+              <LoadingImage
                 src="/cam.png"
                 alt="Photographe en action"
                 fill
@@ -561,8 +564,8 @@ export default function Home() {
               Portrait · Cérémonie · Événement · Projet de marque
             </p>
 
-            <div className="mt-5 flex max-w-md justify-center overflow-hidden rounded-2xl">
-              <Image
+            <div className="relative mt-5 flex max-w-md justify-center overflow-hidden rounded-2xl">
+              <LoadingImage
                 src="/contact.PNG"
                 alt="Contact PS23PHOTOGRAPHY"
                 width={520}

@@ -75,7 +75,7 @@ export function Header({ compact = false }: HeaderProps) {
             </a>
             <a href="#services">Services</a>
             <a href="#experience">Expérience</a>
-            <a href="#client">Espace client</a>
+            <Link href="/espace-client">Espace client</Link>
             <a
               href="#contact"
               className="rounded-full bg-[#6f3de2] px-7 py-4 text-sm font-semibold text-white"
@@ -128,13 +128,13 @@ export function Header({ compact = false }: HeaderProps) {
               >
                 Expérience
               </a>
-              <a
+              <Link
                 className="rounded-2xl px-4 py-3 hover:bg-[#f7f2ff]"
-                href="#client"
+                href="/espace-client"
                 onClick={() => setMenuOpen(false)}
               >
                 Espace client
-              </a>
+              </Link>
             </div>
           )}
         </div>

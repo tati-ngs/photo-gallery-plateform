@@ -1,20 +1,26 @@
-import Image from "next/image";
+import { LoadingImage } from "@/components/LoadingImage";
 import type { GalleryCategory } from "@/data/gallery";
 import type { ServiceItem } from "@/data/services";
 
 type ServiceCardProps = {
   service: ServiceItem;
+  eager?: boolean;
   onOpenCategory: (category: Exclude<GalleryCategory, "tout">) => void;
 };
 
-export function ServiceCard({ service, onOpenCategory }: ServiceCardProps) {
+export function ServiceCard({
+  eager = false,
+  service,
+  onOpenCategory,
+}: ServiceCardProps) {
   return (
     <article className="motion-card group overflow-hidden bg-[#f7f2ff]">
       <div className="relative aspect-[4/3] overflow-hidden lg:aspect-[16/9]">
-        <Image
+        <LoadingImage
           src={service.image}
           alt={service.imageAlt}
           fill
+          loading={eager ? "eager" : "lazy"}
           quality={95}
           sizes="(max-width: 768px) 100vw, 50vw"
           className={`motion-image object-cover ${service.imagePosition} saturate-110 contrast-105 group-hover:object-top group-active:object-top`}
