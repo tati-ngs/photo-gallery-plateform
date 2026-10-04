@@ -11,14 +11,14 @@ import type { SyntheticEvent } from "react";
 import { useRef } from "react";
 import { useState } from "react";
 
-function parseFrenchDate(value: string) {
-  const match = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+function parseInputDate(value: string) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
 
   if (!match) {
     return null;
   }
 
-  const [, day, month, year] = match;
+  const [, year, month, day] = match;
   const parsedDate = new Date(Number(year), Number(month) - 1, Number(day));
 
   if (
@@ -30,6 +30,10 @@ function parseFrenchDate(value: string) {
   }
 
   return parsedDate;
+}
+
+function formatFrenchDate(date: Date) {
+  return new Intl.DateTimeFormat("fr-FR").format(date);
 }
 
 export default function Home() {
@@ -76,28 +80,28 @@ export default function Home() {
       return;
     }
 
-    if (date) {
-      // Vérifie que le client ne choisit pas une date déjà passée.
-      const requestedDate = parseFrenchDate(date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+    // Vérifie que le client ne choisit pas une date déjà passée.
+    const requestedDate = parseInputDate(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-      if (!requestedDate) {
-        dateInputRef.current?.setCustomValidity(
-          "Merci d’entrer la date au format JJ/MM/AAAA.",
-        );
-        dateInputRef.current?.reportValidity();
-        return;
-      }
-
-      if (requestedDate < today) {
-        dateInputRef.current?.setCustomValidity(
-          "La date souhaitée ne peut pas être antérieure à aujourd’hui.",
-        );
-        dateInputRef.current?.reportValidity();
-        return;
-      }
+    if (!requestedDate) {
+      dateInputRef.current?.setCustomValidity(
+        "Merci de choisir une date valide.",
+      );
+      dateInputRef.current?.reportValidity();
+      return;
     }
+
+    if (requestedDate < today) {
+      dateInputRef.current?.setCustomValidity(
+        "La date souhaitée ne peut pas être antérieure à aujourd’hui.",
+      );
+      dateInputRef.current?.reportValidity();
+      return;
+    }
+
+    const formattedDate = formatFrenchDate(requestedDate);
 
     // Prépare un message WhatsApp complet en attendant la future partie admin.
     const whatsappMessage = [
@@ -107,7 +111,7 @@ export default function Home() {
       `E-mail : ${email || "Non précisé"}`,
       `Téléphone : ${phone}`,
       `Projet : ${project || "Non précisé"}`,
-      `Date souhaitée : ${date || "Non précisée"}`,
+      `Date souhaitée : ${formattedDate}`,
       `Lieu : ${location || "Non précisé"}`,
       "",
       "Message :",
@@ -634,14 +638,11 @@ export default function Home() {
                 Date souhaitée *
                 <input
                   className="rounded-xl border border-[#eadff5] bg-[#fbf7ff] px-4 py-3 text-sm font-normal outline-none transition focus:border-[#6f3de2]"
-                  inputMode="numeric"
                   name="date"
-                  pattern="\d{1,2}/\d{1,2}/\d{4}"
-                  placeholder="JJ/MM/AAAA"
                   ref={dateInputRef}
                   required
-                  title="Entrez une date au format JJ/MM/AAAA"
-                  type="text"
+                  title="Choisissez une date"
+                  type="date"
                   onChange={(event) => event.currentTarget.setCustomValidity("")}
                 />
               </label>
