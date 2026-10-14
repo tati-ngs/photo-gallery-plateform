@@ -34,18 +34,16 @@ const getGallery = async (code: string) => {
     return null;
   }
 
-  const response = await fetch(
-    `${url}/rest/v1/galleries?code=eq.${encodeURIComponent(
-      code,
-    )}&select=client,code,photographer_message,type,date,photos,status&limit=1`,
-    {
-      cache: "no-store",
-      headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`,
-      },
+  const response = await fetch(`${url}/rest/v1/rpc/get_gallery_by_code`, {
+    cache: "no-store",
+    method: "POST",
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${anonKey}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({ p_code: code }),
+  });
 
   if (!response.ok) {
     return null;

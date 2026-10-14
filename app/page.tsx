@@ -7,10 +7,47 @@ import { ServiceCard } from "@/components/ServiceCard";
 import type { GalleryCategory } from "@/data/gallery";
 import { services } from "@/data/services";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { SyntheticEvent } from "react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useState } from "react";
+
+type PublicPhoto = {
+  id: number;
+  title: string;
+  category: string;
+  public_url: string;
+};
+
+type PublicPhotographer = {
+  display_name: string;
+  slug: string;
+  whatsapp: string;
+  email: string;
+};
+
+type PublicPhotoCategory = "shooting" | "ceremonie" | "marque" | "conference";
+
+const getPhotoCategory = (category: string): PublicPhotoCategory => {
+  const normalizedCategory = category
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  if (normalizedCategory.includes("ceremonie")) {
+    return "ceremonie";
+  }
+
+  if (normalizedCategory.includes("marque")) {
+    return "marque";
+  }
+
+  if (normalizedCategory.includes("conference")) {
+    return "conference";
+  }
+
+  return "shooting";
+};
 
 function parseInputDate(value: string) {
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -39,10 +76,94 @@ function formatFrenchDate(date: Date) {
 
 export default function Home() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const photographerSlugFromPath = pathname.startsWith("/photographe/")
+    ? decodeURIComponent(pathname.split("/")[2] ?? "")
+    : "";
+  const photographerSlug =
+    photographerSlugFromPath ||
+    searchParams.get("photographe")?.trim().toLowerCase() ||
+    "";
   const dateInputRef = useRef<HTMLInputElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const [activeGallery, setActiveGallery] = useState<GalleryCategory>("tout");
   const [contactMessage, setContactMessage] = useState("");
+  const [publicPhotos, setPublicPhotos] = useState<PublicPhoto[]>([]);
+  const [photographerProfile, setPhotographerProfile] = useState<PublicPhotographer | null>(null);
+
+  useEffect(() => {
+    const loadPublicPhotos = async () => {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/public_photos?select=id,title,category,public_url&order=created_at.desc`,
+          {
+            cache: "no-store",
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`,
+            },
+          },
+        );
+
+        if (response.ok) {
+          setPublicPhotos((await response.json()) as PublicPhoto[]);
+        }
+      } catch {
+        // The static portfolio images remain available if the public feed is unavailable.
+      }
+    };
+
+    loadPublicPhotos();
+  }, []);
+
+  useEffect(() => {
+    if (!photographerSlug) {
+      setPhotographerProfile(null);
+      return;
+    }
+
+    const loadPhotographerProfile = async () => {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        return;
+      }
+
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/photographer_profiles?slug=eq.${encodeURIComponent(photographerSlug)}&select=display_name,slug,whatsapp,email&limit=1`,
+        {
+          cache: "no-store",
+          headers: {
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+        },
+      );
+
+      if (response.ok) {
+        const profiles = (await response.json()) as PublicPhotographer[];
+        setPhotographerProfile(profiles[0] ?? null);
+      }
+    };
+
+    loadPhotographerProfile();
+  }, [photographerSlug]);
+
+  const getHomepageImage = (
+    category: PublicPhotoCategory,
+    fallback: string,
+  ) =>
+    publicPhotos.find((photo) => getPhotoCategory(photo.category) === category)
+      ?.public_url ?? fallback;
 
   const showGallery = (category: GalleryCategory) => {
     router.push(`/galerie?categorie=${category}`);
@@ -118,12 +239,23 @@ export default function Home() {
       "Message :",
       message || "Non précisé",
     ].join("\n");
-    const whatsappUrl = new URL("https://api.whatsapp.com/send");
-    whatsappUrl.searchParams.set("phone", "2250504012432");
-    whatsappUrl.searchParams.set("text", whatsappMessage);
+    const contactPhone = photographerProfile
+      ? photographerProfile.whatsapp.trim()
+      : "2250504012432";
+    const contactEmail = photographerProfile?.email;
 
-    setContactMessage("WhatsApp va s’ouvrir avec votre demande prête à envoyer.");
-    window.location.href = whatsappUrl.toString();
+    if (contactPhone) {
+      const whatsappUrl = new URL("https://api.whatsapp.com/send");
+      whatsappUrl.searchParams.set("phone", contactPhone.replace(/\D/g, ""));
+      whatsappUrl.searchParams.set("text", whatsappMessage);
+      setContactMessage("WhatsApp va s’ouvrir avec votre demande prête à envoyer.");
+      window.location.href = whatsappUrl.toString();
+      return;
+    }
+
+    if (contactEmail) {
+      window.location.href = `mailto:${contactEmail}?subject=Nouvelle demande photo&body=${encodeURIComponent(whatsappMessage)}`;
+    }
   };
 
   return (
@@ -139,7 +271,7 @@ export default function Home() {
 
           <div className="relative flex w-full flex-col items-center lg:block">
             <h1 className="hero-title-reveal max-w-full text-center font-[family-name:var(--font-anton)] text-6xl leading-[0.9] text-[#6f3de2] sm:text-8xl md:text-[120px] lg:text-[140px]">
-              JULIEN KOUADIO
+              {photographerProfile?.display_name || "JULIEN KOUADIO"}
             </h1>
 
             <div className="absolute left-1/2 top-20 h-[250px] w-[280px] -translate-x-1/2 sm:top-24 sm:h-[300px] sm:w-[330px] md:h-[310px] md:w-[340px] lg:top-20 lg:h-[295px] lg:w-[330px]">
@@ -262,7 +394,10 @@ export default function Home() {
                 eager={index < 3}
                 key={service.title}
                 onOpenCategory={showGallery}
-                service={service}
+                service={{
+                  ...service,
+                  image: getHomepageImage(service.category, service.image),
+                }}
               />
             ))}
           </div>
@@ -341,7 +476,7 @@ export default function Home() {
             >
               <div className="relative aspect-square overflow-hidden rounded-lg">
                 <LoadingImage
-                  src="/douceur d'un oui.jpeg"
+                  src={getHomepageImage("ceremonie", "/douceur d'un oui.jpeg")}
                   alt="Cérémonie sous une arche"
                   fill
                   quality={95}
@@ -367,7 +502,7 @@ export default function Home() {
               >
                 <div className="relative aspect-square overflow-hidden rounded-lg">
                   <LoadingImage
-                    src="/lumiere du jour.jpeg"
+                    src={getHomepageImage("shooting", "/lumiere du jour.jpeg")}
                     alt="Portrait à la lumière du jour"
                     fill
                     quality={95}
@@ -392,7 +527,7 @@ export default function Home() {
               >
                 <div className="relative aspect-square overflow-hidden rounded-lg">
                   <LoadingImage
-                    src="/matiere.jpg"
+                    src={getHomepageImage("marque", "/matiere.jpg")}
                     alt="Matières et nuances"
                     fill
                     quality={95}
@@ -417,7 +552,7 @@ export default function Home() {
               >
                 <div className="relative aspect-square overflow-hidden rounded-lg">
                   <LoadingImage
-                    src="/conference.jpeg"
+                    src={getHomepageImage("conference", "/conference.jpeg")}
                     alt="Conférence et panel"
                     fill
                     quality={95}

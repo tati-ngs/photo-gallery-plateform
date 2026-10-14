@@ -36,17 +36,15 @@ export function AccessGalleryForm() {
 
     setIsChecking(true);
 
-    const response = await fetch(
-      `${url}/rest/v1/galleries?code=eq.${encodeURIComponent(
-        galleryCode,
-      )}&select=code&limit=1`,
-      {
-        headers: {
-          apikey: anonKey,
-          Authorization: `Bearer ${anonKey}`,
-        },
+    const response = await fetch(`${url}/rest/v1/rpc/get_gallery_by_code`, {
+      method: "POST",
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ p_code: galleryCode }),
+    });
     const galleries = response.ok ? await response.json() : [];
 
     setIsChecking(false);
