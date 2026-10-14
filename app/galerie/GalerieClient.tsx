@@ -5,12 +5,19 @@ import { Header } from "@/components/Header";
 import { Lightbox } from "@/components/Lightbox";
 import {
   galleryFilters,
-  galleryItems,
   type GalleryCategory,
+  type GalleryItem,
 } from "@/data/gallery";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type PublicPhoto = {
+  id: number;
+  title: string;
+  category: string;
+  public_url: string;
+};
 
 function getValidCategory(category: string | null): GalleryCategory | null {
   if (
@@ -25,12 +32,45 @@ function getValidCategory(category: string | null): GalleryCategory | null {
   return null;
 }
 
+function getCategoryKey(category: string): Exclude<GalleryCategory, "tout"> {
+  const normalizedCategory = category
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  if (normalizedCategory.includes("ceremonie")) {
+    return "ceremonie";
+  }
+
+  if (normalizedCategory.includes("marque")) {
+    return "marque";
+  }
+
+  if (normalizedCategory.includes("conference")) {
+    return "conference";
+  }
+
+  return "shooting";
+}
+
+function mapPublicPhoto(photo: PublicPhoto): GalleryItem {
+  return {
+    title: photo.title,
+    category: photo.category,
+    categoryKey: getCategoryKey(photo.category),
+    src: photo.public_url,
+  };
+}
+
 export function GalerieClient() {
   const searchParams = useSearchParams();
   const categoryFromUrl = getValidCategory(searchParams.get("categorie"));
   const [selectedCategory, setSelectedCategory] =
     useState<GalleryCategory | null>(null);
   const [activeImage, setActiveImage] = useState<number | null>(null);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState("");
   const activeCategory = selectedCategory ?? categoryFromUrl ?? "tout";
 
   const filteredGalleryItems =
@@ -39,6 +79,44 @@ export function GalerieClient() {
       : galleryItems.filter((item) => item.categoryKey === activeCategory);
   const currentImage =
     activeImage === null ? null : filteredGalleryItems[activeImage];
+
+  useEffect(() => {
+    const loadPublicPhotos = async () => {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        setMessage("La galerie publique n’est pas encore reliée à Supabase.");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/public_photos?select=id,title,category,public_url&order=created_at.desc`,
+          {
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`,
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Supabase public_photos request failed");
+        }
+
+        const photos = (await response.json()) as PublicPhoto[];
+        setGalleryItems(photos.map(mapPublicPhoto));
+      } catch {
+        setMessage("Impossible de charger les photos publiées pour le moment.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPublicPhotos();
+  }, []);
 
   const selectCategory = (category: GalleryCategory) => {
     setSelectedCategory(category);
@@ -108,6 +186,18 @@ export function GalerieClient() {
           </div>
 
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {isLoading && (
+              <p className="rounded-3xl border border-dashed border-[#e7dff2] bg-white p-6 text-sm font-semibold text-[#7b6f8d] sm:col-span-2 lg:col-span-3 xl:col-span-4">
+                Chargement de la galerie...
+              </p>
+            )}
+
+            {!isLoading && filteredGalleryItems.length === 0 && (
+              <p className="rounded-3xl border border-dashed border-[#e7dff2] bg-white p-6 text-sm font-semibold text-[#7b6f8d] sm:col-span-2 lg:col-span-3 xl:col-span-4">
+                {message || "Aucune photo n’est publiée pour le moment."}
+              </p>
+            )}
+
             {filteredGalleryItems.map((item, index) => (
               <GalleryCard
                 index={index}

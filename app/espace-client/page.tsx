@@ -2,6 +2,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { LoadingImage } from "@/components/LoadingImage";
 import Link from "next/link";
+import { AccessGalleryForm } from "./AccessGalleryForm";
 
 const clientFeatures = [
   {
@@ -156,23 +157,7 @@ export default function EspaceClientPage() {
               Votre code vous sera envoyé dès que votre galerie photo sera prête.
             </p>
 
-            <form className="mt-6 grid gap-4">
-              <label className="grid gap-2 text-xs font-semibold">
-                Code galerie
-                <input
-                  className="rounded-xl border border-[#eadff5] bg-[#fbf7ff] px-4 py-3 text-sm font-normal uppercase outline-none transition focus:border-[#6f3de2]"
-                  placeholder="Ex : PS23-2026"
-                  type="text"
-                />
-              </label>
-
-              <button
-                className="motion-button rounded-full bg-[#6f3de2] px-7 py-3 text-sm font-semibold text-white"
-                type="button"
-              >
-                Ouvrir ma galerie ↗
-              </button>
-            </form>
+            <AccessGalleryForm />
 
             <div className="mt-6 rounded-2xl bg-[#f1e9ff] p-4">
               <p className="text-sm font-bold">Pas encore de code ?</p>

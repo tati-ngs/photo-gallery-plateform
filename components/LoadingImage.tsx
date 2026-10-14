@@ -13,16 +13,28 @@ export function LoadingImage({
   imageClassName = "",
   loadingClassName = "",
   onLoad,
+  onError,
   ...props
 }: LoadingImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   return (
     <>
       {!isLoaded && (
         <div
-          className={`image-loading-shimmer absolute inset-0 bg-[#f1e9ff] ${loadingClassName}`}
-        />
+          className={`image-loading-shimmer absolute inset-0 grid place-items-center bg-[#f1e9ff] ${loadingClassName}`}
+        >
+          <span
+            aria-label={hasError ? "Image indisponible" : "Image en chargement"}
+            className={`size-9 rounded-full border-2 border-[#d9c8f1] ${
+              hasError
+                ? "border-t-[#b42318]"
+                : "animate-spin border-t-[#6f3de2]"
+            }`}
+            role="status"
+          />
+        </div>
       )}
 
       <Image
@@ -33,6 +45,10 @@ export function LoadingImage({
         onLoad={(event) => {
           setIsLoaded(true);
           onLoad?.(event);
+        }}
+        onError={(event) => {
+          setHasError(true);
+          onError?.(event);
         }}
       />
     </>

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { LoadingImage } from "@/components/LoadingImage";
 import type { GalleryItem } from "@/data/gallery";
 
 type LightboxProps = {
@@ -44,13 +44,15 @@ export function Lightbox({
       </button>
 
       <div className="relative h-[78vh] w-full max-w-6xl overflow-hidden rounded-3xl bg-[#241238] shadow-2xl">
-        <Image
+        <LoadingImage
           src={image.src}
           alt={image.title}
           fill
+          key={image.src}
           quality={95}
           sizes="100vw"
           className="object-contain"
+          loadingClassName="bg-[#241238] text-[#d9c4ff]"
           priority
         />
       </div>
