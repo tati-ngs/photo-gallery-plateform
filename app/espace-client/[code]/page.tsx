@@ -8,11 +8,15 @@ export const dynamic = "force-dynamic";
 type Gallery = {
   client: string;
   code: string;
+  photographer_message?: string;
   type: string;
   date: string;
   photos: number;
   status: string;
 };
+
+const defaultPhotographerMessage =
+  "Merci pour votre confiance. Votre galerie est prête, vous pouvez consulter vos photos tranquillement et télécharger vos coups de cœur.";
 
 type StoragePhoto = {
   name: string;
@@ -33,7 +37,7 @@ const getGallery = async (code: string) => {
   const response = await fetch(
     `${url}/rest/v1/galleries?code=eq.${encodeURIComponent(
       code,
-    )}&select=client,code,type,date,photos,status&limit=1`,
+    )}&select=client,code,photographer_message,type,date,photos,status&limit=1`,
     {
       cache: "no-store",
       headers: {
@@ -175,6 +179,16 @@ export default async function ClientGalleryPage({
                   </p>
                 </article>
               </div>
+
+              <section className="mt-6 rounded-2xl border border-[#eadff5] bg-white p-5 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#6f3de2]">
+                  Message du photographe
+                </p>
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-[#7b6f8d]">
+                  {gallery.photographer_message?.trim() ||
+                    defaultPhotographerMessage}
+                </p>
+              </section>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <ClientGalleryPhotos photos={photos} />
