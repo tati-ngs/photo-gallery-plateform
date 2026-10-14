@@ -74,6 +74,25 @@ function formatFrenchDate(date: Date) {
   return new Intl.DateTimeFormat("fr-FR").format(date);
 }
 
+function formatWhatsAppPhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+
+  if (digits.startsWith("00")) {
+    return digits.slice(2);
+  }
+
+  if (digits.startsWith("225")) {
+    return digits;
+  }
+
+  // Les numéros ivoiriens sont souvent enregistrés localement avec 10 chiffres.
+  if (digits.length === 10 && digits.startsWith("0")) {
+    return `225${digits}`;
+  }
+
+  return digits;
+}
+
 function HomeContent() {
   const router = useRouter();
   const pathname = usePathname();
@@ -245,11 +264,10 @@ function HomeContent() {
     const contactEmail = photographerProfile?.email;
 
     if (contactPhone) {
-      const whatsappUrl = new URL("https://api.whatsapp.com/send");
-      whatsappUrl.searchParams.set("phone", contactPhone.replace(/\D/g, ""));
-      whatsappUrl.searchParams.set("text", whatsappMessage);
+      const formattedPhone = formatWhatsAppPhone(contactPhone);
+      const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(whatsappMessage)}`;
       setContactMessage("WhatsApp va s’ouvrir avec votre demande prête à envoyer.");
-      window.location.href = whatsappUrl.toString();
+      window.location.href = whatsappUrl;
       return;
     }
 
