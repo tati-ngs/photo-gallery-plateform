@@ -9,7 +9,7 @@ import { services } from "@/data/services";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { SyntheticEvent } from "react";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useState } from "react";
 
 type PublicPhoto = {
@@ -74,7 +74,7 @@ function formatFrenchDate(date: Date) {
   return new Intl.DateTimeFormat("fr-FR").format(date);
 }
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -839,4 +839,12 @@ export default function Home() {
   );
 
 
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
+  );
 }
